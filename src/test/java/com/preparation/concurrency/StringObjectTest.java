@@ -1,9 +1,10 @@
 package com.preparation.concurrency;
 
-import org.junit.Before;
 import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
@@ -12,44 +13,29 @@ import static org.junit.Assert.assertEquals;
  */
 public class StringObjectTest {
 
-    private StringObject stringObject;
-
-    @Before
-    public void setUp() throws Exception {
-        stringObject = new StringObject();
-    }
-
     @Test
-    public void shouldAddIntOneThread() {
-        stringObject.addInt(1);
-        stringObject.addInt(2);
-        stringObject.addInt(3);
-        stringObject.addInt(4);
+    public void shouldAddIntMultiThreads() throws InterruptedException {
+        int iterations = 20;
+        StringObject stringObject = new StringObject(iterations);
 
-        assertEquals("1234", stringObject.value());
-    }
+        ExecutorService service = Executors.newFixedThreadPool(2);
+        for (int i = 1; i <= 2; i++) {
+            final int finalI = i;
+            Runnable runner = () -> {
+                for (int j = 0; j < iterations; j++) {
+                    stringObject.addInt(finalI);
+                }
+            };
+            service.submit(runner);
+        }
 
-    @Test
-    public void shouldAddIntMultiThreads() {
-        final CountDownLatch START = new CountDownLatch(2);
+        service.shutdown();
+        service.awaitTermination(1, TimeUnit.MINUTES);
 
-        Thread t1 = new Thread(() -> {
-            for (int i = 0; i < 10; i++) {
-                stringObject.addInt(1);
-            }
-        });
-        Thread t2 = new Thread(() -> {
-            for (int i = 0; i < 10; i++) {
-                stringObject.addInt(2);
-            }
-        });
-
-
-        t1.start();
-        t2.start();
-
-
-        String substr = stringObject.value().substring(0, 10);
-        assertEquals("1111111111", substr);
+        String value = stringObject.value();
+        String substr1 = value.substring(0, 10);
+        String substr2 = value.substring(value.length() - 10, value.length());
+        assertEquals("1111111111", substr1);
+        assertEquals("2222222222", substr2);
     }
 }

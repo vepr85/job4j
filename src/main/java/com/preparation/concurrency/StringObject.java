@@ -14,14 +14,35 @@ package com.preparation.concurrency;
  * Created by abyakimenko on 28.09.2018.
  */
 public class StringObject {
-    private String text;
+    private volatile String text;
+    private static final int setSize = 10;
+    private final int iterations;
+    private int lastNum = 2;
+    private int lastLen = 0;
 
-    public StringObject() {
+    public StringObject(int iterations) {
+        this.iterations = iterations;
         text = "";
     }
 
-    void addInt(int number) {
+    synchronized void addInt(int number) {
+
+        while (lastNum == number) {
+            try {
+                System.out.println(Thread.currentThread().getName() + " will wait....");
+                wait(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         text = text + String.valueOf(number);
+        int len = text.length() / setSize;
+        if (len != lastLen || ((text.length() - iterations) == (iterations / setSize) * setSize)) {
+            lastNum = number;
+            lastLen = len;
+            notifyAll();
+        }
     }
 
     String value() {
