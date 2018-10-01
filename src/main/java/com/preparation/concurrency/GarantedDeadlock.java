@@ -1,35 +1,37 @@
 package com.preparation.concurrency;
 
-// + http://qaru.site/questions/2383790/how-to-write-guaranteed-deadlock-via-waitnotify
+import java.util.concurrent.CountDownLatch;
 
-// Написать гарантированный deadlock
-// объяснить принцип работы
 public class GarantedDeadlock implements Runnable {
+    private final Object first;
+    private final Object second;
+    private static final CountDownLatch latch = new CountDownLatch(2);
 
-    private Object lock1;
-    private Object lock2;
+    public GarantedDeadlock(Object first, Object second) {
+        this.first = first;
+        this.second = second;
+    }
 
-    public GarantedDeadlock(Object lock1, Object lock2) {
-        this.lock1 = lock1;
-        this.lock2 = lock2;
+    public static void main(String[] args) {
+        new Thread(new GarantedDeadlock("first", "second")).start();
+        new Thread(new GarantedDeadlock("second", "first")).start();
     }
 
     @Override
     public void run() {
-        while (true) {
-            synchronized (lock1) {
-                synchronized (lock2) {
-                    System.out.println(Thread.currentThread().getName());
-                }
+        System.out.println("In run(): " + Thread.currentThread().getName());
+        synchronized (first) {
+            System.out.println("synchronized (first): " + Thread.currentThread().getName());
+            try {
+                System.out.println("latch: " + latch.getCount());
+                latch.countDown();
+                latch.await();
+            } catch (InterruptedException ignored) {
+            }
+            
+            synchronized (second) {
+                System.out.println(Thread.currentThread().getName());
             }
         }
-    }
-
-    public static void main(String a[]) {
-        Object lock1 = new Object();
-        Object lock2 = new Object();
-
-        new Thread(new GarantedDeadlock(lock1, lock2), "FIRST").start();
-        new Thread(new GarantedDeadlock(lock2, lock1), "SECOND").start();
     }
 }
