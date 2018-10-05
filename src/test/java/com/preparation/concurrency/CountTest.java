@@ -1,16 +1,13 @@
 package com.preparation.concurrency;
 
-import com.anarsoft.vmlens.concurrent.junit.ConcurrentTestRunner;
 import org.junit.After;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import static org.junit.Assert.assertEquals;
 
 /**
  * Created by abyakimenko on 28.09.2018.
  */
-@RunWith(ConcurrentTestRunner.class)
 public class CountTest {
 
     private Count counter = new Count();

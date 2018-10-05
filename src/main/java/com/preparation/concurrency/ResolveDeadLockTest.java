@@ -1,67 +1,73 @@
 package com.preparation.concurrency;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ResolveDeadLockTest {
 
-	public static void main(String[] args) {
-		ResolveDeadLockTest test = new ResolveDeadLockTest();
+    private static final Logger logger = LoggerFactory.getLogger(ResolveDeadLockTest.class);
 
-		final A a = test.new A();
-		final B b = test.new B();
+    public static void main(String[] args) {
+        ResolveDeadLockTest test = new ResolveDeadLockTest();
 
-		// Thread-1
-		Runnable block1 = () -> {
-			synchronized (a) {
-				try {
-				// Добавляем задержку, чтобы обе нити могли начать попытки
-				// блокирования ресурсов
-					Thread.sleep(100);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				// Thread-1 заняла A но также нуждается в B
-				synchronized (b) {
-					System.out.println("In block 1");
-				}
-			}
-		};
+        final A a = test.new A();
+        final B b = test.new B();
 
-		// Thread-2
-		Runnable block2 = () -> {
-			synchronized (a) {
-				// Thread-2 заняла B но также нуждается в A
-				synchronized (b) {
-					System.out.println("In block 2");
-				}
-			}
-		};
+        // Thread-1
+        Runnable block1 = () -> {
+            synchronized (a) {
+                try {
+                    // Добавляем задержку, чтобы обе нити могли начать попытки
+                    // блокирования ресурсов
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    logger.error("InterruptedException");
+                    Thread.currentThread().interrupt();
+                }
+                // Thread-1 заняла A но также нуждается в B
+                synchronized (b) {
+                    logger.info("In block 1");
+                }
+            }
+        };
 
-		new Thread(block1).start();
-		new Thread(block2).start();
-	}
+        // Thread-2
+        Runnable block2 = () -> {
+            synchronized (a) {
+                // Thread-2 заняла B но также нуждается в A
+                synchronized (b) {
+                    logger.info("In block 2");
+                }
+            }
+        };
 
-	// Resource A
-	private class A {
-		private int i = 10;
+        new Thread(block1).start();
+        new Thread(block2).start();
+    }
 
-		public int getI() {
-			return i;
-		}
+    // Resource A
+    private class A {
+        private int i = 10;
 
-		public void setI(int i) {
-			this.i = i;
-		}
-	}
+        public int getI() {
+            return i;
+        }
 
-	// Resource B
-	private class B {
-		private int i = 20;
+        public void setI(int i) {
+            this.i = i;
+        }
+    }
 
-		public int getI() {
-			return i;
-		}
+    // Resource B
+    private class B {
+        private int i = 20;
 
-		public void setI(int i) {
-			this.i = i;
-		}
-	}
+        public int getI() {
+            return i;
+        }
+
+        public void setI(int i) {
+            this.i = i;
+        }
+    }
 }
