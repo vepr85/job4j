@@ -3,6 +3,10 @@ package com.preparation.concurrency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Классический случай deadlock
+ * Решением является блокировка ресурсов каждый потом в одинаковой последовательности
+ */
 public class ResolveDeadLockTest {
 
     private static final Logger logger = LoggerFactory.getLogger(ResolveDeadLockTest.class);
